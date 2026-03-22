@@ -7,7 +7,12 @@ import {
   getCompletionRate,
   getDailyReflection,
   getHexagramById,
+  getPracticeSummary,
+  getRecommendedHexagrams,
+  getRecentChapterFocus,
+  getReflectionPath,
   getSearchResults,
+  getThemeMomentum,
   INITIAL_PROGRESS,
   mergeIds,
   saveDailyReflection,
@@ -60,6 +65,15 @@ describe("engine", () => {
     expect(reflection.prompt.length).toBeGreaterThan(10);
   });
 
+  it("builds a stable seven day reflection path", () => {
+    const path = getReflectionPath("2026-03-18");
+
+    expect(path).toHaveLength(7);
+    expect(path[0].date).toBe("2026-03-18");
+    expect(path[6].date).toBe("2026-03-24");
+    expect(path).toEqual(getReflectionPath("2026-03-18"));
+  });
+
   it("stores daily reflections once per date", () => {
     const reflection = getDailyReflection("2026-03-18");
     const once = saveDailyReflection(INITIAL_PROGRESS, reflection);
@@ -92,5 +106,35 @@ describe("engine", () => {
     expect(getSearchResults("Qian").some((item) => item.id === 1)).toBe(true);
     expect(getSearchResults("承载").some((item) => item.id === 2)).toBe(true);
     expect(getSearchResults("", "终局").every((item) => item.chapter === "终局")).toBe(true);
+  });
+
+  it("summarizes theme momentum and practice stats", () => {
+    const progress = {
+      ...INITIAL_PROGRESS,
+      completedHexagramIds: [1, 2, 3],
+      notes: { 1: "记一笔", 2: "" },
+      insights: ["a", "b"],
+      dailyReflections: [getDailyReflection("2026-03-18")],
+      journal: [applyChoice(INITIAL_PROGRESS, 1, hexagrams[0].choices[0]).journal[0]],
+    };
+
+    expect(getThemeMomentum(progress)[0].count).toBeGreaterThan(0);
+    expect(getPracticeSummary(progress)).toEqual({
+      totalSessions: 1,
+      reflectionDays: 1,
+      noteCount: 1,
+      insightCount: 2,
+    });
+  });
+
+  it("recommends unseen related hexagrams and chapter focus", () => {
+    const progress = applyChoice(INITIAL_PROGRESS, 1, hexagrams[0].choices[0]);
+    const recommendations = getRecommendedHexagrams(1, progress);
+
+    expect(recommendations).toHaveLength(3);
+    expect(recommendations.every((item) => item.id !== 1)).toBe(true);
+
+    const chapterFocus = getRecentChapterFocus(progress);
+    expect(chapterFocus[0]?.count).toBe(1);
   });
 });

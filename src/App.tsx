@@ -6,7 +6,12 @@ import {
   getCompletionRate,
   getDailyReflection,
   getHexagramById,
+  getPracticeSummary,
+  getRecommendedHexagrams,
+  getRecentChapterFocus,
+  getReflectionPath,
   getSearchResults,
+  getThemeMomentum,
   INITIAL_PROGRESS,
   mergeIds,
   saveDailyReflection,
@@ -45,11 +50,19 @@ export default function App() {
 
   const currentHexagram = getHexagramById(currentHexagramId);
   const daily = useMemo(() => getDailyReflection(todayIso()), []);
+  const reflectionPath = useMemo(() => getReflectionPath(todayIso()), []);
   const filteredHexagrams = useMemo(
     () => getSearchResults(search, selectedChapter === "全部" ? undefined : selectedChapter),
     [search, selectedChapter],
   );
   const completionRate = getCompletionRate(progress);
+  const practiceSummary = useMemo(() => getPracticeSummary(progress), [progress]);
+  const themeMomentum = useMemo(() => getThemeMomentum(progress), [progress]);
+  const recentChapterFocus = useMemo(() => getRecentChapterFocus(progress), [progress]);
+  const recommendedHexagrams = useMemo(
+    () => getRecommendedHexagrams(currentHexagramId, progress),
+    [currentHexagramId, progress],
+  );
 
   function encounter(hexagram: Hexagram) {
     setCurrentHexagramId(hexagram.id);
@@ -87,10 +100,10 @@ export default function App() {
     <div className={`app-shell ${progress.readingMode ? "reading-mode" : ""}`}>
       <aside className="hero-panel">
         <div className="hero-copy">
-          <p className="eyebrow">易境</p>
+          <p className="eyebrow">易境 v0.2</p>
           <h1>在卦象推演中读完《易经》</h1>
           <p className="intro">
-            用六十四卦构成一张可游玩的思想地图。你不在这里求“准”，而是在情境、选择与复盘中练习判断。
+            这不是求签器。它更像一张可反复进入的判断训练地图：今天入局，七日回看，慢慢把自己的动作风格练出来。
           </p>
         </div>
 
@@ -121,16 +134,16 @@ export default function App() {
           </article>
           <article>
             <span>札记数</span>
-            <strong>{Object.values(progress.notes).filter(Boolean).length}</strong>
+            <strong>{practiceSummary.noteCount}</strong>
           </article>
           <article>
             <span>灵感条目</span>
-            <strong>{progress.insights.length}</strong>
+            <strong>{practiceSummary.insightCount}</strong>
           </article>
         </section>
 
         <section className="route-map">
-          <div className="panel-heading">
+          <div className="panel-heading compact-heading">
             <h2>六界路图</h2>
             <span>章节世界</span>
           </div>
@@ -151,12 +164,83 @@ export default function App() {
         </section>
 
         <section className="daily-card">
-          <div className="panel-heading">
+          <div className="panel-heading compact-heading">
             <h2>今日反思</h2>
             <span>{daily.date}</span>
           </div>
           <p className="daily-symbol">{getHexagramById(daily.hexagramId).symbol}</p>
           <p>{daily.prompt}</p>
+        </section>
+
+        <section className="practice-card">
+          <div className="panel-heading compact-heading">
+            <h2>七日修习</h2>
+            <span>连续路径</span>
+          </div>
+          <div className="practice-strip">
+            {reflectionPath.map((item, index) => {
+              const hexagram = getHexagramById(item.hexagramId);
+              const visited = progress.dailyReflections.some((reflection) => reflection.date === item.date);
+
+              return (
+                <button
+                  type="button"
+                  key={item.date}
+                  className={`practice-step ${visited ? "visited" : ""} ${item.date === daily.date ? "today" : ""}`}
+                  onClick={() => {
+                    setProgress((current) => saveDailyReflection(current, item));
+                    encounter(hexagram);
+                  }}
+                >
+                  <span>D{index + 1}</span>
+                  <strong>{hexagram.name}</strong>
+                  <small>{item.date.slice(5)}</small>
+                </button>
+              );
+            })}
+          </div>
+          <p className="muted practice-caption">连着走七天，不追求“答对”，只看你反复撞上的主题。</p>
+        </section>
+
+        <section className="practice-card">
+          <div className="panel-heading compact-heading">
+            <h2>修习档案</h2>
+            <span>轻量统计</span>
+          </div>
+          <div className="practice-metrics">
+            <article>
+              <span>推演局数</span>
+              <strong>{practiceSummary.totalSessions}</strong>
+            </article>
+            <article>
+              <span>日课天数</span>
+              <strong>{practiceSummary.reflectionDays}</strong>
+            </article>
+          </div>
+          <div className="mini-section">
+            <h3>最近章节重心</h3>
+            {recentChapterFocus.length === 0 ? (
+              <p className="muted">你还没形成明显偏向。先走几局，系统再给你脸色。</p>
+            ) : (
+              <div className="tag-row">
+                {recentChapterFocus.map((item) => (
+                  <span key={item.chapter} className="metric-pill">{item.chapter} × {item.count}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mini-section">
+            <h3>反复出现的主题</h3>
+            {themeMomentum.length === 0 ? (
+              <p className="muted">还没 enough 痕迹。先选一次，再回来看看自己总在什么地方打转。</p>
+            ) : (
+              <div className="tag-row">
+                {themeMomentum.map((item) => (
+                  <span key={item.theme} className="metric-pill">{item.theme} × {item.count}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </aside>
 
@@ -246,6 +330,22 @@ export default function App() {
                     <span>动爻：第{choice.changingLine}爻</span>
                     <span>转向：{target.name} · {target.title}</span>
                     <p>{choice.consequence}</p>
+                  </button>
+                ))}
+              </div>
+            </article>
+
+            <article className="choice-card">
+              <div className="panel-heading">
+                <h2>下一步建议</h2>
+                <span>顺手继续</span>
+              </div>
+              <div className="recommendation-list">
+                {recommendedHexagrams.map((item) => (
+                  <button type="button" key={item.id} className="recommendation-item" onClick={() => encounter(item)}>
+                    <strong>{item.name} · {item.title}</strong>
+                    <span>{item.chapter}</span>
+                    <p>{item.summary}</p>
                   </button>
                 ))}
               </div>

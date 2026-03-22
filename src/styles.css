@@ -67,7 +67,9 @@ button:hover {
 }
 
 button.ghost,
-.tag-button {
+.tag-button,
+.practice-step,
+.metric-pill {
   background: var(--accent-soft);
   color: var(--text);
   border-color: var(--line);
@@ -114,7 +116,9 @@ button.ghost,
 .muted,
 .codex-header span,
 .route-item span,
-.choice-item span {
+.choice-item span,
+.recommendation-item span,
+.practice-step small {
   color: var(--muted);
 }
 
@@ -136,6 +140,10 @@ h1 {
   margin-bottom: 0.8rem;
 }
 
+h3 {
+  margin-bottom: 0.4rem;
+}
+
 .intro {
   color: var(--muted);
   line-height: 1.7;
@@ -144,7 +152,9 @@ h1 {
 .hero-actions,
 .tag-row,
 .toolbar,
-.study-columns {
+.study-columns,
+.practice-strip,
+.practice-metrics {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -152,7 +162,8 @@ h1 {
 
 .stat-grid,
 .codex-grid,
-.encounter-layout {
+.encounter-layout,
+.practice-metrics {
   display: grid;
   gap: 1rem;
 }
@@ -167,7 +178,10 @@ h1 {
 .choice-card,
 .study-card,
 .journal-card,
-.codex-card {
+.codex-card,
+.practice-card,
+.practice-metrics article,
+.recommendation-item {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -183,19 +197,28 @@ textarea,
 input,
 select,
 .codex-card p,
-.line-list li {
+.line-list li,
+.recommendation-item p,
+.practice-card p {
   line-height: 1.65;
 }
 
-.stat-grid strong {
+.stat-grid strong,
+.practice-metrics strong {
   display: block;
   margin-top: 0.3rem;
   font-size: 1.2rem;
 }
 
-.route-map {
+.route-map,
+.recommendation-list,
+.choice-list,
+.journal-list,
+.codex-layout,
+.practice-card,
+.mini-section {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.9rem;
 }
 
 .route-item {
@@ -226,6 +249,10 @@ select,
   margin-bottom: 0.9rem;
 }
 
+.compact-heading {
+  margin-bottom: 0;
+}
+
 .scene-title {
   justify-content: flex-start;
 }
@@ -248,21 +275,22 @@ select,
   grid-column: span 2;
 }
 
-.choice-list,
-.journal-list,
-.codex-layout {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.choice-item {
+.choice-item,
+.recommendation-item {
   display: grid;
   text-align: left;
   gap: 0.35rem;
   border-radius: 20px;
+  color: var(--text);
+}
+
+.choice-item {
   background: linear-gradient(180deg, rgba(209, 164, 88, 0.18), rgba(0, 0, 0, 0.04));
   border: 1px solid var(--line);
-  color: var(--text);
+}
+
+.recommendation-item {
+  background: linear-gradient(180deg, rgba(122, 165, 151, 0.12), rgba(0, 0, 0, 0.03));
 }
 
 .line-list {
@@ -310,6 +338,49 @@ textarea {
   padding-left: 0.9rem;
 }
 
+.practice-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.practice-step {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem 0.65rem;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.practice-step.today {
+  outline: 1px solid var(--accent);
+}
+
+.practice-step.visited {
+  background: rgba(101, 157, 126, 0.18);
+}
+
+.practice-caption {
+  margin-top: -0.2rem;
+}
+
+.practice-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+}
+
+@media (max-width: 1180px) {
+  .practice-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -320,5 +391,14 @@ textarea {
   .study-card {
     grid-template-columns: 1fr;
     grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .practice-strip,
+  .practice-metrics,
+  .stat-grid,
+  .encounter-layout {
+    grid-template-columns: 1fr;
   }
 }
